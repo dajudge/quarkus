@@ -7,12 +7,18 @@ import java.util.concurrent.atomic.LongAdder;
 import java.util.function.Supplier;
 import java.util.function.ToDoubleFunction;
 
+import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.Meter;
+import io.micrometer.core.instrument.MeterRegistry;
 
 public class Gauges<T> {
 
     private final ConcurrentMap<Meter.Id, T> map;
     private final Supplier<T> factory;
+    private final ConcurrentMap<RegistrationKey, Gauge> registrations = new ConcurrentHashMap<>();
+
+    record RegistrationKey(MeterRegistry registry, Meter.Id id) {
+    }
 
     private Gauges(Supplier<T> factory) {
         this.map = new ConcurrentHashMap<>();
@@ -32,6 +38,6 @@ public class Gauges<T> {
     }
 
     public GaugeBuilder<T> builder(String name, ToDoubleFunction<T> func) {
-        return new GaugeBuilder<>(name, map, factory, func);
+        return new GaugeBuilder<>(name, map, factory, func, registrations);
     }
 }
